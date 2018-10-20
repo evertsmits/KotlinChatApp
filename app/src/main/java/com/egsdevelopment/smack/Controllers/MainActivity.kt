@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
 import android.os.Bundle
-import android.os.Message
 import android.support.v4.content.LocalBroadcastManager
 import android.support.v4.view.GravityCompat
 import android.support.v7.app.ActionBarDrawerToggle
@@ -18,6 +17,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
 import android.widget.EditText
 import com.egsdevelopment.smack.Model.Channel
+import com.egsdevelopment.smack.Model.Message
 import com.egsdevelopment.smack.R
 import com.egsdevelopment.smack.Services.AuthService
 import com.egsdevelopment.smack.Services.MessageService
@@ -56,6 +56,7 @@ class MainActivity : AppCompatActivity() {
         toggle.syncState()
         socket.connect()
         socket.on("channelCreated", onNewChannel)
+        socket.on("messageCreated", onNewMessage)
         setUpAdapters()
 
         channel_list.setOnItemClickListener { _, _, i, _ ->
@@ -175,8 +176,30 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    private val onNewMessage = Emitter.Listener { args ->
+        runOnUiThread {
+            val msgBody = args[0] as String
+            val channelId = args[2] as String
+            val userName = args[3] as String
+            val userAvatar = args[4] as String
+            val userAvatarColor = args[5] as String
+            val id = args[6] as String
+            val timestamp = args[7] as String
+
+            val newMessage = Message(msgBody, userName, channelId, userAvatar, userAvatarColor, id, timestamp)
+            MessageService.messages.add(newMessage)
+
+        }
+    }
+
     fun sendMsgBtnClicked(view: View) {
-        hideKeyBoard()
+        if (App.sharedPreferences.isLoggedIn && messageTextField.text.isNotEmpty() && selectedChannel != null) {
+            val userId = UserDataService.id
+            val channelId = selectedChannel!!.id
+            socket.emit("newMessage", messageTextField.text.toString(), userId, channelId, UserDataService.name, UserDataService.avatarName, UserDataService.avatarColor)
+            messageTextField.text.clear()
+            hideKeyBoard()
+        }
     }
 
     fun hideKeyBoard() {

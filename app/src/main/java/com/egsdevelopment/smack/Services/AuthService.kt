@@ -15,9 +15,6 @@ import org.json.JSONObject
 
 object AuthService {
 
-//    var isLoggedIn = false
-//    var userEmail = ""
-//    var authToken = ""
 
     fun registerUser(email: String, password: String, complete: (Boolean) -> Unit) {
 
