@@ -1,9 +1,11 @@
-package com.egsdevelopment.smack
+package com.egsdevelopment.smack.Controllers
 
 import android.graphics.Color
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import com.egsdevelopment.smack.R
+import com.egsdevelopment.smack.Services.AuthService
 import kotlinx.android.synthetic.main.activity_create_user.*
 import java.util.*
 
@@ -34,7 +36,12 @@ class CreateUserActivity : AppCompatActivity() {
     }
 
     fun createUserClicked(view: View) {
+        AuthService.registerUser(this, "j@j.com", "123456"){complete ->
+            if (complete){
+                println("DONE WITH user create")
+            }
 
+        }
     }
 
     fun generateColorClicked(view: View) {
