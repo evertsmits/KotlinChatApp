@@ -1,6 +1,7 @@
 package com.egsdevelopment.smack.Services
 
 import android.graphics.Color
+import com.egsdevelopment.smack.Controllers.App
 import java.util.*
 
 object UserDataService {
@@ -42,9 +43,9 @@ object UserDataService {
         avatarName = ""
         email = ""
         name = ""
-        AuthService.authToken = ""
-        AuthService.userEmail = ""
-        AuthService.isLoggedIn = false
+        App.sharedPreferences.authToken = ""
+        App.sharedPreferences.userEmail = ""
+        App.sharedPreferences.isLoggedIn = false
     }
 
 }

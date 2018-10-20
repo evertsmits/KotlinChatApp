@@ -27,8 +27,6 @@ class LoginAcitivity : AppCompatActivity() {
         hideKeyBoard()
         if (email.isNotEmpty() && password.isNotEmpty()) {
             AuthService.loginUser(this, email, password) { loginSucces ->
-                println("DIE DINGETJE")
-                println("DEM TOKEN" + AuthService.authToken)
                 if (loginSucces) {
                     println("CALLING FINDUSERBYEMAIL")
                     AuthService.findUserByEmail(this) { findSuccess ->
