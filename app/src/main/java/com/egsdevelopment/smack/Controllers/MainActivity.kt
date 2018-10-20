@@ -12,12 +12,10 @@ import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
-import android.view.LayoutInflater
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
 import android.widget.EditText
-import android.widget.LinearLayout
 import com.egsdevelopment.smack.Adapters.MessageAdapter
 import com.egsdevelopment.smack.Model.Channel
 import com.egsdevelopment.smack.Model.Message
@@ -68,6 +66,9 @@ class MainActivity : AppCompatActivity() {
         socket.on("messageCreated", onNewMessage)
         setUpAdapters()
 
+        LocalBroadcastManager.getInstance(this).registerReceiver(userDataChangeReceiver, IntentFilter(
+            BROADCAST_USER_DATA_CHANGE))
+
         channel_list.setOnItemClickListener { _, _, i, _ ->
             selectedChannel = MessageService.channels[i]
             drawer_layout.closeDrawer(GravityCompat.START)
@@ -78,12 +79,6 @@ class MainActivity : AppCompatActivity() {
             AuthService.findUserByEmail(this){}
         }
 
-    }
-
-    override fun onResume() {
-        super.onResume()
-        LocalBroadcastManager.getInstance(this).registerReceiver(userDataChangeReceiver, IntentFilter(
-            BROADCAST_USER_DATA_CHANGE))
     }
 
 
@@ -151,6 +146,7 @@ class MainActivity : AppCompatActivity() {
             userImageNavHeader.setImageResource(R.drawable.profiledefault)
             userImageNavHeader.setBackgroundColor(Color.TRANSPARENT)
             loginBtnNavHeader.text = "login"
+            mainChannelName.text = "Please log in"
         } else {
             val loginIntent = Intent(this, LoginAcitivity::class.java)
             startActivity(loginIntent)
