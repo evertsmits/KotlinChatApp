@@ -1,12 +1,16 @@
 package com.egsdevelopment.smack.Controllers
 
+import android.content.Intent
 import android.graphics.Color
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.v4.content.LocalBroadcastManager
 import android.view.View
+import android.widget.Toast
 import com.egsdevelopment.smack.R
 import com.egsdevelopment.smack.Services.AuthService
 import com.egsdevelopment.smack.Services.UserDataService
+import com.egsdevelopment.smack.Utilities.BROADCAST_USER_DATA_CHANGE
 import kotlinx.android.synthetic.main.activity_create_user.*
 import java.util.*
 
@@ -18,6 +22,7 @@ class CreateUserActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_create_user)
+        createSpinner.visibility = View.INVISIBLE
     }
 
     fun generateUserAvatar(view: View) {
@@ -37,26 +42,61 @@ class CreateUserActivity : AppCompatActivity() {
     }
 
     fun createUserClicked(view: View) {
+        enableSpinner(true)
         val email = createEmailText.text.toString()
         val password = createPasswordText.text.toString()
         val userName = createUserNameText.text.toString()
-        AuthService.registerUser(this, email, password){registerSucces ->
-            if (registerSucces){
-                AuthService.loginUser(this, email, password){loginSucces ->
-                    if (loginSucces) {
-                        AuthService.createUser(this, userName, email, userAvatar, avatarColor) {createSuccess ->
-                            if (createSuccess) {
-                                println(UserDataService.avatarName)
-                                println(UserDataService.avatarColor)
-                                println(UserDataService.name)
-                                finish()
+
+        if (userName.isNotEmpty() && email.isNotEmpty() && password.isNotEmpty()){
+            AuthService.registerUser(this, email, password){registerSucces ->
+                if (registerSucces){
+                    AuthService.loginUser(this, email, password){loginSucces ->
+                        if (loginSucces) {
+                            AuthService.createUser(this, userName, email, userAvatar, avatarColor) {createSuccess ->
+                                if (createSuccess) {
+                                    val userDataChange = Intent(BROADCAST_USER_DATA_CHANGE)
+                                    LocalBroadcastManager.getInstance(this).sendBroadcast(userDataChange)
+                                    enableSpinner(false)
+                                    finish()
+                                } else {
+                                    errorToast()
+                                }
                             }
+                        } else {
+                            errorToast()
                         }
                     }
+                } else {
+                    errorToast()
                 }
-            }
 
+            }
+        } else {
+           fillInCredentialsToast()
         }
+
+
+    }
+
+    fun errorToast() {
+        enableSpinner(false)
+        Toast.makeText(this, "Something went wrong, please try again", Toast.LENGTH_LONG).show()
+    }
+
+    fun fillInCredentialsToast() {
+        enableSpinner(false)
+        Toast.makeText(this, "Please fill in all the credentials", Toast.LENGTH_SHORT).show()
+    }
+
+    fun enableSpinner(enable: Boolean) {
+        if (enable) {
+            createSpinner.visibility = View.VISIBLE
+        } else {
+            createSpinner.visibility = View.INVISIBLE
+        }
+        createUserBtn.isEnabled = !enable
+        createAvatarImgView.isEnabled = !enable
+        createBackgroundColorBtn.isEnabled = !enable
     }
 
     fun generateColorClicked(view: View) {
