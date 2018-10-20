@@ -9,17 +9,28 @@ import android.os.Bundle
 import android.support.v4.content.LocalBroadcastManager
 import android.support.v4.view.GravityCompat
 import android.support.v7.app.ActionBarDrawerToggle
+import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
+import android.view.LayoutInflater
 import android.view.View
+import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
+import com.egsdevelopment.smack.Model.Channel
 import com.egsdevelopment.smack.R
 import com.egsdevelopment.smack.Services.AuthService
+import com.egsdevelopment.smack.Services.MessageService
 import com.egsdevelopment.smack.Services.UserDataService
 import com.egsdevelopment.smack.Utilities.BROADCAST_USER_DATA_CHANGE
+import com.egsdevelopment.smack.Utilities.SOCKET_URL
+import io.socket.client.IO
+import io.socket.emitter.Emitter
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_main.*
 import kotlinx.android.synthetic.main.nav_header_main.*
 
 class MainActivity : AppCompatActivity() {
+
+    val socket = IO.socket(SOCKET_URL)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,9 +44,21 @@ class MainActivity : AppCompatActivity() {
         )
         drawer_layout.addDrawerListener(toggle)
         toggle.syncState()
+        socket.connect()
+        socket.on("channelCreated", onNewChannel)
 
+    }
+
+    override fun onResume() {
+        super.onResume()
         LocalBroadcastManager.getInstance(this).registerReceiver(userDataChangeReceiver, IntentFilter(
             BROADCAST_USER_DATA_CHANGE))
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        socket.disconnect()
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(userDataChangeReceiver)
 
     }
 
@@ -76,11 +99,51 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun addChannelClicked(view: View) {
+        if (AuthService.isLoggedIn) {
+            val builder = AlertDialog.Builder(this)
+            val dialogView = layoutInflater.inflate(R.layout.add_channel_dialog, null)
+            builder.setView(dialogView)
+                .setPositiveButton("Add") { dialogInterface, i ->
+                    // perform some logic when clicked
+                    val nameTextField = dialogView.findViewById(R.id.addChannelNameTxt) as EditText
+                    val descTextField = dialogView.findViewById(R.id.addChannelDescTxt) as EditText
+                    val channelName = nameTextField.text.toString()
+                    val channelDesc = descTextField.text.toString()
+
+                    //create channel with the name and desc
+                    socket.emit("newChannel", channelName, channelDesc)
+
+                }
+                .setNegativeButton("Cancel"){dialogInterface, i ->
+                    // cancel and close the dialog
+
+                }.show()
+        }
+    }
+
+    private val onNewChannel = Emitter.Listener {args ->
+
+        runOnUiThread {
+            val channelName = args[0] as String
+            val channelDesc = args[1] as String
+            val channelId = args[2] as String
+
+            val newChannel = Channel(channelName, channelDesc, channelId)
+
+            MessageService.channels.add(newChannel)
+
+        }
 
     }
 
     fun sendMsgBtnClicked(view: View) {
-
+        hideKeyBoard()
     }
 
+    fun hideKeyBoard() {
+        val inputManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        if (inputManager.isAcceptingText) {
+            inputManager.hideSoftInputFromWindow(currentFocus.windowToken, 0)
+        }
+    }
 }
